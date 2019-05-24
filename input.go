@@ -316,37 +316,49 @@ func (ins Inputs) Swap(i, j int) {
 }
 
 // ToJavaScriptVM ...
+// load all context into js vm
+// TODO - handle loading `contents`
+// TODO - handle the `self` param reference - resolves to different values in different cases
+// maybe `self` can be handled in the particular places where it appears - not here
 func (ins Inputs) ToJavaScriptVM() (*otto.Otto, error) {
 	self := map[string]interface{}{}
+	var path, basename string
 	for _, i := range ins {
+		path, basename = "", ""
 		if i.Provided != nil {
 			if i.Provided.Entry != nil {
-				self[i.ID] = map[string]interface{}{
-					"path": i.Provided.Entry.Location,
-				}
-				continue
+				path = i.Provided.Entry.Location
 			}
+			// what about other types, like int?
+			// probably need to handle those cases
 			if i.Types[0].Type == "string" {
 				self[i.ID] = i.Provided.Raw
 				continue
 			}
 		}
 		if i.Default != nil && i.Default.Entry != nil {
+			path = i.Default.Entry.Location
+		}
+		if path != "" {
+			splitPath = strings.Split(path, "/")
+			basename = splitPath[len(tmp)-1]
 			self[i.ID] = map[string]interface{}{
-				"path": i.Default.Entry.Location,
+				"path":     path,
+				"location": path,
+				"basename": basename,
 			}
-			continue
 		}
 	}
 
-	// No contents to load
-	if len(self) == 0 {
-		return nil, nil
+	// Create the js vm
+	vm := otto.New()
+
+	// Load any input variables into the vm
+	if len(self) > 0 {
+		if err := vm.Set("inputs", self); err != nil {
+			return nil, err
+		}
 	}
 
-	vm := otto.New()
-	if err := vm.Set("inputs", self); err != nil {
-		return nil, err
-	}
 	return vm, nil
 }
