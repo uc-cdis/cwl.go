@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	// "encoding/json"
 
 	"github.com/robertkrimen/otto"
 )
@@ -320,19 +321,34 @@ func (ins Inputs) Swap(i, j int) {
 // TODO - handle loading `contents`
 // TODO - handle the `self` param reference - resolves to different values in different cases
 // maybe `self` can be handled in the particular places where it appears - not here
-func (ins Inputs) ToJavaScriptVM() (*otto.Otto, error) {
+func (ins Inputs) ToJavaScriptVM(prefix string) (*otto.Otto, error) {
 	self := map[string]interface{}{}
-	var path, basename string
+	var (
+		id string
+		path string
+		basename string
+		splitPath []string
+	)
 	for _, i := range ins {
+		id = strings.TrimPrefix(i.ID, prefix)
+		/*
+		fmt.Printf("Input ID: %v\n", id)
+		fmt.Println("Handling this input:")
+		seeIn, _ := json.MarshalIndent(i, "", "    ")
+		fmt.Println(string(seeIn))
+		fmt.Println("Provided:")
+		seeProvided, _ := json.MarshalIndent(i.Provided, "", "    ")
+		fmt.Println(string(seeProvided))
+		*/
 		path, basename = "", ""
 		if i.Provided != nil {
 			if i.Provided.Entry != nil {
 				path = i.Provided.Entry.Location
 			}
-			// what about other types, like int?
-			// probably need to handle those cases
-			if i.Types[0].Type == "string" {
-				self[i.ID] = i.Provided.Raw
+			// every non-file handled here - populate with raw value
+			// this is a janky way of loading context - needs to be made much more robust
+			if i.Types[0].Type != "File" {
+				self[id] = i.Provided.Raw
 				continue
 			}
 		}
@@ -341,8 +357,8 @@ func (ins Inputs) ToJavaScriptVM() (*otto.Otto, error) {
 		}
 		if path != "" {
 			splitPath = strings.Split(path, "/")
-			basename = splitPath[len(tmp)-1]
-			self[i.ID] = map[string]interface{}{
+			basename = splitPath[len(splitPath)-1]
+			self[id] = map[string]interface{}{
 				"path":     path,
 				"location": path,
 				"basename": basename,
