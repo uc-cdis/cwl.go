@@ -29,10 +29,10 @@ func (_ Requirement) New(i interface{}) Requirement {
 				dest.Class = v.(string)
 			case "coresMin":
 				fmt.Println(v)
-				dest.CoresMin = int(v.(float64))
+				dest.CoresMin = v.(float64)
 			case "coresMax":
 				fmt.Println(v)
-				dest.CoresMax = int(v.(float64))
+				dest.CoresMax = v.(float64)
 			case "ramMin":
 				fmt.Println(v)
 				dest.RAMMin = int(v.(float64))
@@ -170,8 +170,8 @@ type ShellCommandRequirement struct {
 // ResourceRequirement is supposed to be embeded to Requirement.
 // @see http://www.commonwl.org/v1.0/CommandLineTool.html#ResourceRequirement
 type ResourceRequirement struct {
-	CoresMin int
-	CoresMax int
+	CoresMin float64
+	CoresMax float64
 	RAMMin   int
 	RAMMax   int
 	// presently not handling tmpdirMin/Max or outdirMin/Max
