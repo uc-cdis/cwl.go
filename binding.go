@@ -41,6 +41,7 @@ func (binding Binding) New(i interface{}) *Binding {
 				dest.ShellQuote = v.(bool)
 			case "valueFrom":
 				dest.ValueFrom = &Alias{v.(string)}
+				// dest.ValueFrom = v.(string)
 			case "outputEval":
 				dest.Eval = &Eval{v.(string)}
 			}

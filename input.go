@@ -240,7 +240,13 @@ func (input *Input) Flatten() []string {
 	case "int":
 		flattened = append(flattened, fmt.Sprintf("%v", input.Provided.Int))
 	case "File":
-		flattened = append(flattened, input.Provided.Entry.Location)
+		if input.Binding != nil && input.Binding.ValueFrom.String != "" {
+			// ValueFrom case must be handled separately
+			// value from ValueFrom gets stored in input.Provided.Raw in transformInput() in K8sEngine.go
+			flattened = append(flattened, input.Provided.Raw.(string))
+		} else {
+			flattened = append(flattened, input.Provided.Entry.Location)
+		}
 	case "Any":
 		switch v := input.Provided.Raw.(type) {
 		case string:
@@ -318,27 +324,25 @@ func (ins Inputs) Swap(i, j int) {
 
 // ToJavaScriptVM ...
 // load all context into js vm
-// TODO - handle loading `contents`
-// TODO - handle the `self` param reference - resolves to different values in different cases
-// maybe `self` can be handled in the particular places where it appears - not here
+// NOTE: NOT using this function in gen3cwl - we are using our own, better function for loading inputs context
 func (ins Inputs) ToJavaScriptVM(prefix string) (*otto.Otto, error) {
 	self := map[string]interface{}{}
 	var (
-		id string
-		path string
-		basename string
+		id        string
+		path      string
+		basename  string
 		splitPath []string
 	)
 	for _, i := range ins {
 		id = strings.TrimPrefix(i.ID, prefix)
 		/*
-		fmt.Printf("Input ID: %v\n", id)
-		fmt.Println("Handling this input:")
-		seeIn, _ := json.MarshalIndent(i, "", "    ")
-		fmt.Println(string(seeIn))
-		fmt.Println("Provided:")
-		seeProvided, _ := json.MarshalIndent(i.Provided, "", "    ")
-		fmt.Println(string(seeProvided))
+			fmt.Printf("Input ID: %v\n", id)
+			fmt.Println("Handling this input:")
+			seeIn, _ := json.MarshalIndent(i, "", "    ")
+			fmt.Println(string(seeIn))
+			fmt.Println("Provided:")
+			seeProvided, _ := json.MarshalIndent(i.Provided, "", "    ")
+			fmt.Println(string(seeProvided))
 		*/
 		path, basename = "", ""
 		if i.Provided != nil {
