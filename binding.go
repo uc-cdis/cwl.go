@@ -23,6 +23,7 @@ type Binding struct {
 // New constructs new "Binding".
 func (binding Binding) New(i interface{}) *Binding {
 	dest := new(Binding)
+	dest.ShellQuote = true // default value according to CWL spec
 	switch x := i.(type) {
 	case map[string]interface{}:
 		for key, v := range x {
@@ -41,7 +42,6 @@ func (binding Binding) New(i interface{}) *Binding {
 				dest.ShellQuote = v.(bool)
 			case "valueFrom":
 				dest.ValueFrom = &Alias{v.(string)}
-				// dest.ValueFrom = v.(string)
 			case "outputEval":
 				dest.Eval = &Eval{v.(string)}
 			}
